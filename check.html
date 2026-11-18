@@ -1,0 +1,196 @@
+<div id="search-results" class="search-results">
+    <div class="card3" id="card">
+        <p class="card-content"></p>
+        <h1>HPC start and view job</h1>
+        <p>
+            Prerequisite 
+            <code>train.sbatch</code> &gt; file that defines compute resources and time limits
+        </p>
+        <div class="codehilite">
+            <pre>
+                <span></span>
+                <code>sbatch
+                    <span class="w"> </span>train.sbatch
+                </code>
+            </pre>
+        </div>
+
+        <p>Check queue its status:</p>
+        <div class="codehilite">
+            <pre>
+                <span></span>
+                <code>squeue
+                    <span class="w"> </span>
+                    -u
+                    <span class="w"> </span>
+                    <span class="s2">"</span>
+                    <span class="nv">$USER</span>
+                    <span class="s2">"</span>
+                </code>
+            </pre>
+        </div>
+
+        <p>Watch live logs (cuts off sometimes)</p>
+        <div class="codehilite">
+            <pre>
+                <span></span>
+                <code>
+                    tail
+                    <span class="w"> </span>
+                    -f
+                    <span class="w"> </span>
+                    log/ai-hpc-JOBID.out
+                    <span class="w"> </span>
+                    log/ai-hpc-JOBID.err
+                </code>
+            </pre>
+        </div>
+
+        <p>Watch live logs alternative (doesn't cut off)</p>
+        <div class="codehilite">
+            <pre>
+                <span></span>
+                <code>
+                    watch -n 1 'tail -c JOBID log/ai-hpc-JOBID.out | tr "\r" "\n" | tail -n 15'
+                </code>
+            </pre>
+        </div>
+        <p></p>
+
+        <div class="all_buttons">
+            <!-- DELETE NOTE BUTTON  -->    
+            <div class="btn_wrapper">
+                <button id="del_note" class="animated-button">
+                        <svg viewBox="0 0 24 24" class="arr-2" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+                        </svg>
+                    <span class="text">X delete note</span>
+                    <span class="circle"></span>
+                    <svg viewBox="0 0 24 24" class="arr-1" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+                    </svg>
+                </button>
+            </div>
+                
+            <!-- UPDATE NOTE BUTTON  -->
+            <div class="btn_wrapper">
+                <button id="update_note" class="animated-button">
+                    <svg viewBox="0 0 24 24" class="arr-2" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+                    </svg>
+                    <span class="text">⟳ update note</span>
+                    <span class="circle"></span>
+                    <svg viewBox="0 0 24 24" class="arr-1" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
+                    </svg>
+                </button>
+            </div>  
+        </div>
+    </div> 
+    <!-- Card over -->
+
+
+    <aside class="right-side-tab vn-library" aria-label="Note library">
+        <header class="vn-library__header">
+            <div>
+            <span class="vn-library__eyebrow">YOUR WORKSPACE</span>
+            <h2>Library<span class="vn-library__dot"></span></h2>
+            </div>
+
+            <span class="vn-library__emblem" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+                <path d="M4 4h4v16H4zM10 4h4v16h-4zM16 5l4-1 4 15-4 1z"/>
+            </svg>
+            </span>
+        </header>
+
+        <nav class="vn-library__nav" aria-label="Library filters">
+            <button type="button" class="vn-filter is-active" aria-pressed="true">
+            <span>All notes</span>
+            <span class="vn-filter__count">04</span>
+            </button>
+
+            <button type="button" class="vn-filter" aria-pressed="false">
+            <span>Favourites</span>
+            <span class="vn-filter__symbol" aria-hidden="true">☆</span>
+            </button>
+
+            <button type="button" class="vn-filter" aria-pressed="false">
+            <span>Collections</span>
+            <span class="vn-filter__symbol" aria-hidden="true">+</span>
+            </button>
+
+            <button type="button" class="vn-filter" aria-pressed="false">
+            <span>Tags</span>
+            <span class="vn-filter__symbol" aria-hidden="true">#</span>
+            </button>
+        </nav>
+
+        <div class="vn-library__section">
+            <span>IN THIS VIEW</span>
+            <span class="vn-library__rule"></span>
+            <span>04</span>
+        </div>
+
+        <div class="vn-library__notes">
+            <button type="button" class="vn-note is-selected"
+                    data-note-id="148" aria-current="true">
+            <span class="vn-note__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                <path d="M7 3h7l4 4v14H7zM14 3v5h4M10 12h5M10 16h5"/>
+                </svg>
+            </span>
+            <span class="vn-note__body">
+                <span class="vn-note__title">HPC start and view job</span>
+                <span class="vn-note__preview">Submit jobs, inspect queues and follow logs.</span>
+            </span>
+            <span class="vn-note__arrow" aria-hidden="true">↗</span>
+            </button>
+
+            <button type="button" class="vn-note">
+            <span class="vn-note__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                <path d="M7 3h7l4 4v14H7zM14 3v5h4M10 12h5M10 16h5"/>
+                </svg>
+            </span>
+            <span class="vn-note__body">
+                <span class="vn-note__title">RAG evaluation notes</span>
+                <span class="vn-note__preview">Retrieval quality, relevance and test cases.</span>
+            </span>
+            <span class="vn-note__arrow" aria-hidden="true">↗</span>
+            </button>
+
+            <button type="button" class="vn-note">
+            <span class="vn-note__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                <path d="M7 3h7l4 4v14H7zM14 3v5h4M10 12h5M10 16h5"/>
+                </svg>
+            </span>
+            <span class="vn-note__body">
+                <span class="vn-note__title">Agent design patterns</span>
+                <span class="vn-note__preview">Tools, planning and keeping state manageable.</span>
+            </span>
+            <span class="vn-note__arrow" aria-hidden="true">↗</span>
+            </button>
+
+            <button type="button" class="vn-note">
+            <span class="vn-note__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                <path d="M7 3h7l4 4v14H7zM14 3v5h4M10 12h5M10 16h5"/>
+                </svg>
+            </span>
+            <span class="vn-note__body">
+                <span class="vn-note__title">LangChain setup</span>
+                <span class="vn-note__preview">Environment configuration and first experiments.</span>
+            </span>
+            <span class="vn-note__arrow" aria-hidden="true">↗</span>
+            </button>
+        </div>
+
+        <footer class="vn-library__footer">
+            <span class="vn-library__footer-line"></span>
+            A little order for your ideas.
+        </footer>
+        </aside>
+
+</div>

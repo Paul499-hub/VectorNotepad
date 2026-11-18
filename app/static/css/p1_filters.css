@@ -1,0 +1,21 @@
+.app .library .filters {
+    display: flex;
+    gap: 20px;
+    padding: 0 22px;
+}
+.app .library .filters .filter-btn {
+    padding: 11px 0;
+    border: 0;
+    border-bottom: 1px solid transparent;
+    background: transparent;
+    color: var(--faint);
+    font: 9px var(--mono);
+    letter-spacing: .5px;
+}
+.app .library .filters .filter-btn:hover {
+    color: var(--text);
+}
+.app .library .filters .filter-btn[aria-pressed="true"] {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}

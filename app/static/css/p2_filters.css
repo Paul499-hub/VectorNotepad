@@ -1,0 +1,35 @@
+.app .library .filters {
+    display: flex;
+    gap: 5px;
+    padding: 0 20px;
+}
+.app .library .filters .filter-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    flex: 1;
+    padding: 9px 5px;
+    border: 1px solid transparent;
+    border-radius: 0;
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    background: var(--bg);
+    color: var(--faint);
+    
+}
+.app .library .filters .filter-btn:hover {
+    color: var(--text);
+}
+.app .library .filters .filter-btn[aria-pressed="true"] {
+    color: var(--accent);
+    background: var(--accent-soft);
+    /* border-bottom-color: #b4df83e8; */
+    border-color: #b4df8352;
+}
+.app .library .filters .filter-btn svg {
+    width: 13px;
+    height: 13px;
+}

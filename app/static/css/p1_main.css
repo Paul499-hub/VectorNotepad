@@ -1,0 +1,606 @@
+:root {
+    --bg: #0b0b0b;
+    --sidebar: #0e0e0e;
+    --line: #292926;
+    --text: #e8e7db;
+    --muted: #a5a59b;
+    --faint: #77776f;
+    --accent: #b4df83;
+    --accent-soft: #b4df830b;
+    --accent-line: #b4df8338;
+    --warning: #d8bb83;
+    --danger: #e4a192;
+    
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    --sans: Arial, Helvetica, sans-serif;
+    --inter: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+}
+
+button {
+    cursor: pointer;
+}
+
+svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+}
+
+.search input::-webkit-search-cancel-button {
+    filter: grayscale(1) brightness(2);
+    cursor: pointer;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+.app *::-webkit-scrollbar {
+    width: 5px;
+}
+.app *::-webkit-scrollbar-track {
+    background: transparent;
+}
+.app *::-webkit-scrollbar-thumb {
+    background: #383833;
+}
+.app *::-webkit-scrollbar-thumb:hover {
+    background: #59594f;
+}
+/* GLOBAL RULES OVER  */
+
+.design-bar {
+    height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+        padding: 0 25px;
+        border-bottom: 1px solid var(--line);
+        font: 11px var(--mono);
+        letter-spacing: 1.8px;
+        color: var(--muted);
+}
+.design-bar .connection {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 0.7px;
+}
+.design-bar .connection i {
+    width: 5px;
+        height: 5px;
+        background: var(--accent);
+}
+.design-bar .connection span {
+    color: var(--accent);
+}
+
+.app {
+    display: grid;
+    grid-template-columns: 330px minmax(0, 1fr);
+    height: calc(100dvh - 50px);
+}
+.app .library {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--sidebar);
+    border-right: 1px solid var(--line);
+}
+.app .library .brand {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-height: 88px;
+    padding: 0 24px;
+    border-bottom: 1px solid var(--line);
+}
+.app .library .brand .brand-mark {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--text);
+}
+.app .library .brand .brand-mark svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.app .library .brand .brand-name {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -1.5px;
+}
+.app .library .brand .local-label {
+    margin-left: auto;
+    padding: 4px 6px;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    font: 9px var(--mono);
+    letter-spacing: .7px;
+}
+
+.app .library .new-note-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-shrink: 0;
+    overflow: hidden;
+    margin: 18px;
+    padding: 14px;
+    border: 1px solid var(--text);
+    background: var(--text);
+    color: #111110;
+    font: 11px var(--mono);
+    letter-spacing: 1px;
+    transition: all 260ms ease;
+}
+.app .library .new-note-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+}
+.app .library .new-note-btn:hover {
+    background: var(--accent);
+    border: 1px solid transparent;
+    transform: translateY(-1px);
+    filter: brightness(1.07);
+    box-shadow: 0px 0px 460px #b4df8340;
+}
+
+.app .library .list-heading {
+    display: flex;
+    justify-content: space-between;
+    padding: 22px 22px 12px;
+    color: var(--faint);
+    font: 11px var(--mono);
+    letter-spacing: 1.2px;
+    position: relative;
+    overflow: hidden;
+}
+.app .library .list-heading b {
+    color: var(--accent);
+    font-weight: 400;
+}
+.app .library.loading .list-heading::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: -40%;
+    width: 40%;
+    height: 1px;
+    background: var(--accent);
+    animation: search-progress 1s ease-in-out infinite;
+}
+
+.app .library .note-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0 8px 20px;
+}
+.app .library .note-list .note-row {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 20px 14px;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    background: transparent;
+    text-align: left;
+    transition: background 180ms ease;
+    color: var(--text);
+}
+.app .library .note-list .note-row::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 20px;
+    bottom: 20px;
+    width: 2px;
+    background: var(--accent);
+    transform: scaleY(0);
+    transition: transform 180ms ease;
+}
+.app .library .note-list .note-row:hover {
+    background: #ffffff04;
+}
+.app .library .note-list .note-row[aria-current="true"] {
+    background: #ffffff06;
+}
+.app .library .note-list .note-row .note-title {
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font: 14px var(--inter);
+}
+.app .library .note-list .note-row .note-preview {
+    display: block;
+    margin-top: 10px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: var(--muted);
+    font: 11px / 1.5 var(--mono);
+}
+.app .library .note-list .note-row .note-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 13px;
+    color: var(--faint);
+    font: 11px var(--mono);
+}
+.app .library .note-list .note-row .note-meta .row-score {
+    color: var(--faint);
+}
+.app .library .note-list .note-row[aria-current="true"]::before {
+    transform: scaleY(1);
+}
+
+.app .library .library-footer {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 9px 22px;
+    border-top: 1px solid var(--line);
+    color: var(--faint);
+    font: 8px var(--mono);
+}
+
+.app .workspace {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+} 
+.app .workspace .toolbar {
+    min-height: 88px;
+    flex-shrink: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 620px) minmax(0, 1fr);
+    align-items: center;
+    gap: 20px;
+    padding: 16px 28px;
+    border-bottom: 1px solid var(--line);
+}
+.app .workspace .toolbar .breadcrumb {
+    color: var(--faint);
+    font: 11px var(--mono);
+    white-space: nowrap;
+}
+.app .workspace .toolbar .breadcrumb span {
+    color: var(--text);
+    margin-left: 10px;
+}
+.app .workspace .toolbar .search {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    border: 1px solid #45453e;
+    transition: border-color 180ms ease;
+}
+.app .workspace .toolbar .search:focus-within {
+    border-color: transparent;
+    border-bottom-color: var(--line);
+}
+.app .workspace .toolbar .search > svg {
+    width: 15px;
+    height: 15px;
+    color: var(--muted);
+    margin-left: 10px;
+}
+.app .workspace .toolbar .search input {
+    width: 100%;
+    min-width: 0;
+    height: 42px;
+    padding: 0 12px;
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: var(--text);
+    font: 12px var(--mono);
+}
+
+.app .workspace .toolbar .search .search-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    padding-right: 4px;
+}
+.app .workspace .toolbar .search .search-actions .search-action {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 32px;
+    padding: 0 12px;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font: 11px var(--mono);
+    letter-spacing: .4px;
+    transition: all 180ms ease; 
+}
+.app .workspace .toolbar .search .search-actions .search-action:hover {
+    background: var(--text);
+    color: var(--bg);
+}
+
+.app .workspace .toolbar .search .search-actions .search-action svg {
+    width: 13px;
+    height: 13px;
+    transition: transform 180ms ease;
+}
+.search-action + .search-action {
+    border-left: 1px solid var(--line);
+}
+
+.app .workspace .toolbar .actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 5px;
+}
+
+.app .workspace .toolbar .actions .icon-button {
+    display: grid;
+    place-items: center;
+    width: 33px;
+    height: 33px;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+    color: var(--muted);
+}
+.app .workspace .toolbar .actions .icon-button:hover {
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+.app .workspace .toolbar .actions .icon-button.danger:hover {
+    color: var(--danger);
+}
+.app .workspace .toolbar .actions .icon-button.active {
+    color: var(--warning);
+}
+
+
+.app .workspace .toolbar .actions .divider {
+    width: 1px;
+    height: 17px;
+    margin: 0 7px;
+    background: var(--line);
+}
+
+.save-button,
+.app .workspace .toolbar .actions .edit-button {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .5px;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+    border: 1px solid #5c5c54;
+    color: var(--text);
+    text-transform: uppercase;
+    padding: 10px 15px;
+    transition: all 160ms ease;
+}
+.save-button svg,
+.app .workspace .toolbar .actions .edit-button svg {
+    width: 13px;
+    height: 13px;
+}
+.save-button:hover,
+.app .workspace .toolbar .actions .edit-button:hover {
+    background: var(--text);
+    color: var(--bg);
+    border: 1px solid transparent;
+}
+
+
+.app .workspace .document-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+.app .workspace .document-scroll .document {
+    max-width: 940px;
+    margin: auto;
+    padding: 70px 54px 45px;
+}
+.app .workspace .document-scroll .document.reveal { 
+    animation: reveal 220ms ease both; 
+}
+.app .workspace .document-scroll .document .document-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 30px;
+    color: var(--muted);
+    font: 9px var(--mono);
+    letter-spacing: .8px;
+}
+.app .workspace .document-scroll .document .document-meta .document-label {
+    color: var(--accent);
+}
+.app .workspace .document-scroll .document .document-meta i {
+    width: 3px;
+    height: 3px;
+    background: var(--faint);
+}
+.app .workspace .document-scroll .document .card-content {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.95;
+    overflow-wrap: anywhere;
+    animation: enter 240ms ease;
+}
+.app .workspace .document-scroll .document .attachments {
+    margin-top: 45px;
+    padding-top: 19px;
+    border-top: 1px solid var(--line);
+}
+.app .workspace .document-scroll .document .attachments .attachment-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 14px;
+    color: var(--muted);
+    font: 9px var(--mono);
+    letter-spacing: .6px;
+}
+
+.app .workspace .document-scroll .document .attachments .attachment-heading .attach-button {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px;
+    border: 0;
+    background: transparent;
+    color: var(--accent);
+    font: 10px var(--mono);
+}
+.app .workspace .document-scroll .document .attachments .attachment-heading .attach-button svg {
+    width: 13px;
+    height: 13px;
+}
+.app .workspace .document-scroll .document .attachments .file-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.app .workspace .document-scroll .document .attachments .file-list .empty-files {
+    margin: 0;
+    color: var(--faint);
+    font: 10px / 1.8 var(--mono);
+}
+
+.app .workspace .document-scroll .document .edit-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 25px;
+    padding: 12px;
+    border: 1px solid var(--accent-line);
+    background: var(--accent-soft);
+    color: var(--accent);
+    font: 10px / 1.6 var(--mono);
+}
+.app .workspace .document-scroll .document .edit-bar button {
+    border: 0;
+    background: transparent;
+    color: var(--danger);
+    font: inherit;
+    white-space: nowrap;
+}
+.app .workspace .document-scroll .document .editor {
+    width: 100%;
+    min-height: 52vh;
+    padding: 0;
+    border: 0;
+    outline: none;
+    resize: vertical;
+    background: transparent;
+    color: var(--text);
+    caret-color: var(--accent);
+    font: 14px / 1.95 var(--mono);
+}
+.app .workspace .document-scroll .document .editor:focus-visible {
+    outline: 1px solid var(--accent-line);
+    outline-offset: 12px;
+}
+
+
+.app .workspace .status-bar {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 13px 34px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font: 9px var(--mono)
+}
+
+
+/* Main note reveal animation */
+@keyframes reveal {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes search-progress {
+    to {
+        left: 100%;
+    }
+}
+
+/* Sreen size updates  */
+@media (max-width: 720px) {
+    .actions {
+        gap: 1px;
+    }
+    .divider {
+        margin: 0 3px;
+    }
+}
+
+@media (max-width: 1000px){
+    .document {
+        padding: 42px 30px;
+    }
+}
+
+@media (max-width: 1250px){
+    .app .workspace .toolbar {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 14px;
+    }
+    .app .workspace .toolbar .breadcrumb {
+        display: none;
+    }
+}

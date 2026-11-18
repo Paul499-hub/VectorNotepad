@@ -1,0 +1,66 @@
+<header class="toolbar">
+
+    <div class="breadcrumb">
+        Library
+        <span>/ <span id="breadcrumb-label">All notes</span></span>
+    </div>
+
+    <form class="search" id="search-form" role="search">
+        <svg aria-hidden="true">
+            <use href="#i-search"></use>
+        </svg>
+        <input id="search" type="search" placeholder="Find a note..." autocomplete="off">
+        <div class="search-actions" role="group">
+            <button class="search-action" type="button" id="vector">
+                VECTOR
+                <svg aria-hidden="true">
+                    <use href="#i-arrow"></use>
+                </svg>
+            </button>
+            <button class="search-action" type="button" id="keyword">
+                KEYWORD
+                <svg aria-hidden="true">
+                    <use href="#i-arrow"></use>
+                </svg>
+            </button>
+        </div>
+    </form>
+
+    <div class="actions" id="actions">
+
+        <button class="icon-button active" id="favourite" aria-pressed="true">
+            <svg>
+                <use href="#i-star"></use>
+            </svg>
+        </button>
+
+        <button class="icon-button" id="copy">
+            <svg>
+                <use href="#i-copy"></use>
+            </svg>
+        </button>
+        
+        <button class="icon-button danger" id="delete">
+            <svg>
+                <use href="#i-trash"></use>
+            </svg>
+        </button>
+
+        <span class="divider"></span>
+
+        <button class="edit-button" id="edit">
+            <svg aria-hidden="true">
+                <use href="#i-edit"></use>
+            </svg>
+            <span>Edit note</span>
+        </button>
+
+        <button class="save-button" id="save" hidden>
+            <svg aria-hidden="true">
+                <use href="#i-check"></use>
+            </svg>
+            <span>Save note</span>
+        </button>
+
+    </div>
+</header>

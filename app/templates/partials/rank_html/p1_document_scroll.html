@@ -1,0 +1,45 @@
+<div class="document-scroll" id="document-scroll">
+    <section class="document" id="document">
+
+        <div class="document-meta" id="document-meta">
+            <span class="document-label" id="document-label">SQLITE NOTE</span>
+            <i></i>
+            <span id="document-reference">ID / 1</span>
+        </div>
+
+        <div class="edit-bar" id="edit-bar" hidden>
+            <span>Session draft</span>
+            <button id="discard" type="button">Discard edits</button>
+        </div>
+
+
+        <article class="card-content" id="card-content">
+            <h1>Venote</h1>
+            <p>Search your notes, select one from the library, or create a new note.</p>
+        </article>
+
+
+        <textarea class="editor" id="editor" spellcheck="false" hidden></textarea>
+
+        <section class="attachments">
+
+            <div class="attachment-heading">
+                <span id="attachment-count">SESSION ATTACHMENTS / 0</span>
+                <button class="attach-button" id="attach" type="button">
+                    <svg aria-hidden="true">
+                        <use href="#i-attach"></use>
+                    </svg>
+                    Attach file
+                </button>
+            </div>
+            
+            <div class="file-list" id="file-list">
+                <p class="empty-files">No attachments</p>
+            </div>
+
+            <input type="file" id="file-input" multiple hidden>
+            
+        </section>
+
+    </section>
+</div>

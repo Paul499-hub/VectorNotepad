@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <!-- STYLE .css -->
+        <link rel="stylesheet" href="/static/css/p1_main.css">
+        <link rel="stylesheet" href="/static/css/p2_filters.css">
+        <link rel="stylesheet" href="/static/css/partials/codehilite.css">
+        <title>Venote</title>
+    </head>
+    <body>
+        {% include "partials/rank_html/p1_svg.html" %}
+        <!-- TOP DESIGN BAR  -->
+        {% include "partials/rank_html/p1_design_bar.html" %}
+        <div class="app">
+            {% include "partials/rank_0/p1_library.html" %}
+            {% include "partials/rank_0/p1_workspace.html" %}
+        </div>
+
+        <template id="library-note-template">
+            <button type="button" class="note-row" aria-current="False">
+                <span class="note-title">T</span>
+                <span class="note-preview">T</span>
+                <span class="note-meta">
+                    <span class="note-id">SQLITE / 148</span>
+                    <span class="row-score">sim 0.887</span>
+                </span>
+            </button>
+        </template>
+
+    <script src="/static/js/p1_main.js"></script>
+    </body>
+</html>
