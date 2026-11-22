@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Form, File, UploadFile
 # Modules
 from app.schemas.embedding import IN_UpdateRequest, IN_SimilaritySearchRequest
 from app.core.services import storage_svc
 from app.schemas.note import NoteCreate
+from app.schemas.file import FileCreate
 
 router = APIRouter(prefix='/storage', tags=["Storage"])
 
@@ -52,3 +53,24 @@ def r_vector_search(payload: IN_SimilaritySearchRequest):
         return storage_svc.vector_search_note(payload)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/store_files", status_code=200)
+async def r_store_file(
+        note_id: int = Form(...),
+        files: list[UploadFile] = File(...)
+    ):
+    try:
+        payload = []
+        for f in files:
+            data = await f.read()
+            payload.append(FileCreate(
+                filename = f.filename or "unnamed",
+                content_type = f.content_type or "application/octet-stream",
+                size_bytes = len(data),
+                data = data,
+                note_id = note_id
+            ))
+        return storage_svc.store_files(payload=payload)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+

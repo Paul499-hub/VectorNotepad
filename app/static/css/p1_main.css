@@ -512,6 +512,30 @@ svg {
     color: var(--faint);
     font: 10px / 1.8 var(--mono);
 }
+.app .workspace .document-scroll .document .attachments .file-list .file-link {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    max-width: 100%;
+    padding: 11px 12px;
+    border: 1px solid var(--line);
+    color: var(--text);
+    text-decoration: none;
+    font: 11px var(--mono);
+    transition: all 160ms ease;
+}
+.app .workspace .document-scroll .document .attachments .file-list .file-link:hover {
+    border-color: var(--accent);
+}
+.app .workspace .document-scroll .document .attachments .file-list .file-link span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.app .workspace .document-scroll .document .attachments .file-list .file-link small {
+    color: var(--faint);
+    white-space: nowrap;
+}
 
 .app .workspace .document-scroll .document .edit-bar {
     display: flex;

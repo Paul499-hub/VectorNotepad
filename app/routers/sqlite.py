@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 # Modules
 from app.core.services import sqlite_svc
 from app.schemas.embedding import IN_TextEmbedRequest, IN_UpdateRequest
@@ -73,3 +73,23 @@ def r_get_by_id(note_id: int):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/get_note_attachment_metadata/{note_id}", status_code=200)
+def r_get_note_att_meta(note_id: int):
+    try:
+        return sqlite_svc.get_note_att_meta(note_id)    
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/get_file/{file_id}", status_code=200)
+def r_get_file(file_id: int):
+    data = sqlite_svc.get_file_by_id(file_id)
+    if data is None:
+        raise HTTPException(status_code=404, detail="File not found")
+    return Response(
+        content = data.data,
+        media_type = data.content_type
+    )
+    
