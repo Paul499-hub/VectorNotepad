@@ -1,36 +1,88 @@
-
-//  Toggle between `all notes` | `favourites` in ui 
-const allNotesFilterBtnEl = document.getElementById("all-notes")
-const favouritesFilterBtnEl = document.getElementById("favourites")
-const breadcrumbLabelEl = document.getElementById("breadcrumb-label")
-const noteListLabelEl = document.getElementById("note-list-label")
-const vectorSearchBtnEl = document.getElementById("vector")
-const SQLSearchBtnEl = document.getElementById("keyword")
-const searchInputEl = document.getElementById("search")
+// -------- TEMPLATES ------------
+const attachmentBtnTemplate = document.getElementById("stored-attachments-template")
 const noteTemplate = document.getElementById("library-note-template")
-const noteListEl = document.getElementById("note-list")
-const mainNoteContentEl = document.getElementById("card-content")
-const listHeadingEl = document.querySelector(".list-heading")
-const noteDocumentEl = document.getElementById("document")
-const libraryEl = document.getElementById("library")
+// ~~~~~~~~~ BUTTONS ~~~~~~~~~~
+const favouritesFilterBtnEl = document.getElementById("favourites")
+const allNotesFilterBtnEl = document.getElementById("all-notes")
+const discardEditsBtnEl = document.getElementById("discard")
+const newNoteBtnEl = document.getElementById("new-note-btn")
+const vectorSearchBtnEl = document.getElementById("vector")
+const deleteNoteBtnEl = document.getElementById("delete")
+const attachFileBtnEl = document.getElementById("attach")
+const SQLSearchBtnEl = document.getElementById("keyword")
 const editNoteBtnEl = document.getElementById("edit")
 const saveNoteBtnEl = document.getElementById("save")
-const editBarEl = document.getElementById("edit-bar")
-const editorInputEl = document.getElementById("editor")
-const discardEditsBtnEl = document.getElementById("discard")
+// ======== OTHER ===============
+const attachmentCountEl = document.getElementById("attachment-count")
+const breadcrumbLabelEl = document.getElementById("breadcrumb-label")
+const docReferenceEl = document.getElementById("document-reference")
+const noteListLabelEl = document.getElementById("note-list-label")
+const mainNoteContentEl = document.getElementById("card-content")
 const documentMetaEl = document.getElementById("document-meta")
-const saveEditBtnEl = document.getElementById("save")
-const newNoteBtnEl = document.getElementById("new-note-btn")
-const deleteNoteBtnEl = document.getElementById("delete")
+const attachFileInputEl = document.getElementById("file-input")
+const listHeadingEl = document.querySelector(".list-heading")
+const noteDocumentEl = document.getElementById("document")
+const searchInputEl = document.getElementById("search")
+const noteListEl = document.getElementById("note-list")
+const editorInputEl = document.getElementById("editor")
+const fileListEl = document.getElementById("file-list")
+const editBarEl = document.getElementById("edit-bar")
+const libraryEl = document.getElementById("library")
 
+
+// --- Notes
 // datasets
-// note_row.querySelector(".note-meta").dataset.noteId
-// noteDocumentEl.querySelector("#document-meta").dataset.noteId = noteId
+// documentMetaEl.dataset.noteId // <-- workspace's note id dataset (single only)
+// note_row.querySelector(".note-meta").dataset.noteId  // <-- note row's dataset (sidebar / one per note)
+// ---- Important: anything that changes noteId must first check if saving is in progress, and avoid changing it during save using:
+// if (isSaving) return // loading files is in progress
 
+
+//"/get_note_attachment_metadata/{note_id}"
+//"/get_file/{file_id}"
+
+
+// Files cache
+const pending_files = []
 // Notes cache
 const notes_by_id = new Map() // id => {"id":..., "score":..., "text":..., "preview":..., "html_md":... }
 // Last search type - sql or vector - one uses scores and another doesn't
 let lastSearchUsedScores = false
+// Saving state (dont let swap notes while saving so noteId doesn't change)
+let isSaving = false
+// stored attachment variable (for discard reverts) (counts how many attachments are fetched from db)
+let storedAttachmentCountCache 
+
+// Attach files button
+attachFileBtnEl.addEventListener("click", ()=>{
+    attachFileInputEl.click()
+})
+attachFileInputEl.addEventListener("change", async ()=>{
+    for (const file of attachFileInputEl.files) {
+        pending_files.push(file)
+        // Clone attachment element
+        const attachment_fragment = attachmentBtnTemplate.content.cloneNode(true)
+        const link = attachment_fragment.querySelector(".file-link")
+        const url = URL.createObjectURL(file)
+        // Add download & href
+        link.href = url
+        link.download = file.name
+        // replace text content on span & small
+        attachment_fragment.querySelector("span").textContent = file.name 
+        attachment_fragment.querySelector("small").textContent = format_file_size(file.size) 
+        // Add cloned element
+        fileListEl.appendChild(attachment_fragment);
+    }
+    console.log("Pending attachments:", pending_files)
+    if (pending_files.length > 0){
+        fileListEl.querySelector(".empty-files").hidden = true
+        unHideEdit()
+    }
+    attachmentCountEl.textContent = `STORED ATTACHMENTS / ${pending_files.length}`
+    // Clear value for seperate file additions
+    attachFileInputEl.value = ""
+    // TODO: no removal ? 
+})
 // change text to `all notes` in both labels (breadcrumb & list heading)
 allNotesFilterBtnEl.addEventListener("click", ()=>{
     allNotesFilterBtnEl.setAttribute("aria-pressed", "true")
@@ -55,99 +107,159 @@ editNoteBtnEl.addEventListener("click", ()=>{
     unHideEdit()
     // Prefill edit with text of this note OR existing draft already
     const noteId = documentMetaEl.dataset.noteId
-    const currentNoteData = notes_by_id.get(Number(noteId))
-    //notes_by_id.get(noteId)
-    // find text input target and swap with notedatas text
-    editorInputEl.value = currentNoteData.text
+    if (noteId !== undefined){
+        const currentNoteData = notes_by_id.get(Number(noteId))
+        // find text input target and swap with notedatas text
+        editorInputEl.value = currentNoteData.text
+    }
 })
-// Save an edit btn
-saveEditBtnEl.addEventListener("click", async ()=> {
-    // Get noteId
-    const noteId = noteDocumentEl.querySelector("#document-meta").dataset.noteId
-    const noteData = notes_by_id.get(Number(noteId))
-    if (documentMetaEl.dataset.noteId == -1) {
-        const response = await fetch( "/storage/save_note", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({"text":editorInputEl.value})
+// Save an edit btn | Save new note btn
+saveNoteBtnEl.addEventListener("click", async ()=> {
+    // disable save and edit
+    if (isSaving) return
+    isSaving = true
+    run_animation(libraryEl, "loading")
+    attachFileBtnEl.disabled = true
+    attachFileInputEl.disabled = true
+    saveNoteBtnEl.disabled = true
+    try {
+        // Get noteId
+        let noteId = documentMetaEl.dataset.noteId
+        const noteData = notes_by_id.get(Number(noteId))
+        if (noteId === undefined) { // <- new note
+            const response = await fetch( "/storage/save_note", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({"text":editorInputEl.value})
+                }
+            );
+            if (!response.ok) {
+                const err = await response.json();
+                alert(err.detail || "Request failed");
+                return;
             }
-        );
-        if (!response.ok) {
-            const err = await response.json();
-            alert(err.detail || "Request failed");
-            return;
+            const data = await response.json(); // {"id":..., "text":..., "html_md":...}
+            // Add new note to in-memory notes_by_id
+            notes_by_id.set(Number(data.id), data)
+            // Display new note
+            noteId = data.id
         }
-        const data = await response.json(); // {"id":..., "text":..., "html_md":...}
-        // Display new note
-        mainNoteContentEl.innerHTML = data.html_md
-        noteDocumentEl.querySelector("#document-reference").textContent = `ID / ${data.id}`
-        noteDocumentEl.querySelector("#document-meta").dataset.noteId = data.id
-        run_animation(noteDocumentEl, "reveal")
-        HideEdit() 
-        // Refresh the list
-        fill_note_library(notes_by_id, lastSearchUsedScores)
-    }
-    else {
-        // Send update request to backend
-        const response = await fetch("/storage/update_note", {
-            method: "PATCH",
-            headers: {"Content-Type":"application/json"},
-            body: JSON.stringify({"id":noteId, "text":editorInputEl.value })
-        });
-        if (!response.ok){
-            const err = await response.json();
-            alert(err.detail || "Update failed");
-            return;
+        else { // <- note exists already
+            // Send update request to backend
+            const response = await fetch("/storage/update_note", {
+                method: "PATCH",
+                headers: {"Content-Type":"application/json"},
+                body: JSON.stringify({ "id": noteId, "text": editorInputEl.value })
+            });
+            if (!response.ok){
+                const err = await response.json();
+                alert(err.detail || "Update failed");
+                return;
+            }
+            const result = await response.json(); // { "updated_id":..., "old_text":..., new_text:..., new_html_md:... }
+            // Update current note in notes_by_id
+            noteData.html_md = result.new_html_md
+            noteData.text = result.new_text
         }
-        const result = await response.json(); // { "updated_id":..., "old_text":..., new_text:..., new_html_md:... }
-        // Update current note in notes_by_id 
-        noteData.html_md = result.new_html_md
-        noteData.text = result.new_text
-        // Display new note
-        swap_main_note(noteId)
-        HideEdit() 
-        // Refresh the list
-        fill_note_library(notes_by_id, lastSearchUsedScores)
+        // Try uploading files (applies to both existing notes + new note)
+        try {
+            await upload_pending_files(noteId)
+            // Display new note
+            await swap_main_note(noteId)
+            run_animation(noteDocumentEl, "reveal")
+            HideEdit() 
+            // Refresh the list
+            fill_note_library(notes_by_id, lastSearchUsedScores)
+        } catch (error) {
+            console.error(error)
+            alert("Note saved, but attachments failed. Click Save to retry.")
+        }
+    } catch (error) {
+        console.error(error)
+        alert("Could not complete the save. Check the console for details.")
+    } finally {
+        // Flip is saving check - allow notes to be clicked again
+        isSaving = false
+        stop_infinite_animation(libraryEl, "loading")
+        // enable save and edit after upload
+        attachFileBtnEl.disabled = false
+        attachFileInputEl.disabled = false
+        saveNoteBtnEl.disabled = false
     }
-
 })
 // Discard edits btn
 discardEditsBtnEl.addEventListener("click", ()=>{
+    if (isSaving) return // loading files is in progress
+    // Clear attachments (only new)
+    pending_files.length = 0
+    let idx = 0 
+    for (const link of fileListEl.querySelectorAll(".file-link")){
+        idx = idx + 1
+        console.log(idx)
+        if (idx > storedAttachmentCountCache){
+            URL.revokeObjectURL(link.href)
+            link.remove()
+        } 
+    }
+    attachmentCountEl.textContent = `STORED ATTACHMENTS / ${storedAttachmentCountCache}`  
     // Load show markdown of this specific note
     HideEdit()
-    // TODO: delete note draft in memory
+    // Case discarding new note
+    if (documentMetaEl.dataset.noteId === undefined){
+        emptyNoteState()
+    }
 })
 // New note btn
 newNoteBtnEl.addEventListener("click", ()=>{
-    documentMetaEl.dataset.noteId = -1
+    if (isSaving) return
+    clear_pending_attachments()
+    delete documentMetaEl.dataset.noteId
     editorInputEl.value = ""
     unHideEdit()
 })
 // Delete note btn
 deleteNoteBtnEl.addEventListener("click", async ()=>{
-    noteId = noteDocumentEl.querySelector("#document-meta").dataset.noteId
-    const response = await fetch(`/storage/del/${noteId}`, {
-        method: "DELETE",
-    });
-    if(!response.ok){
-        const err = await response.json();
-        alert(err.detail || "Delete failed");
-        return;
+    if (isSaving) return
+    const noteId = noteDocumentEl.querySelector("#document-meta").dataset.noteId
+    if (noteId !== undefined){
+        delete documentMetaEl.dataset.noteId
+        const response = await fetch(`/storage/del/${noteId}`, {
+            method: "DELETE",
+        });
+        if(!response.ok){
+            const err = await response.json();
+            alert(err.detail || "Delete failed");
+            return;
+        }
+        const result = await response.json(); 
+        //unHideEdit()
+        emptyNoteState() // clear dataset and note display
+        HideEdit()
+        notes_by_id.delete(Number(noteId))
+        // Refresh the list
+        fill_note_library(notes_by_id, lastSearchUsedScores)
     }
-    const result = await response.json(); 
-    documentMetaEl.dataset.noteId = -1
-    editorInputEl.value = ""
-    unHideEdit()
-    notes_by_id.delete(Number(noteId))
-    // Refresh the list
-    fill_note_library(notes_by_id, lastSearchUsedScores)
 })
 
+// --------------------- FUNCTIONS
+function clear_pending_attachments(resetStoredAttachmentCountCache = true){
+    pending_files.length = 0
+    for (const link of fileListEl.querySelectorAll(".file-link")){
+        URL.revokeObjectURL(link.href)
+        link.remove()
+    }
+    if (resetStoredAttachmentCountCache === true){
+        storedAttachmentCountCache = 0
+    }
+    attachmentCountEl.textContent = `STORED ATTACHMENTS / ${storedAttachmentCountCache}`    
+}
 // Toggle between individual `active` note under `library` section of ui
-function add_notes_listeners(){
+async function add_notes_listeners(){
     const note_rows = document.querySelectorAll("#note-list .note-row")
     for (const note_row of note_rows) {
-        note_row.addEventListener("click", ()=>{
+        note_row.addEventListener("click", async ()=>{
+            // Do not switch if saving is still happening
+            if (isSaving) return
             // Set all notes to aria-current false
             for (const note of note_rows) {
                 note.setAttribute("aria-current", "false")
@@ -156,18 +268,22 @@ function add_notes_listeners(){
             note_row.setAttribute("aria-current", "true")
             // Swap main note
             const noteId = Number(note_row.querySelector(".note-meta").dataset.noteId) // reading dataset returns str
-            swap_main_note(noteId)
+            // Clear pending upload files
+            clear_pending_attachments()
+            // Show updated note
+            await swap_main_note(noteId)
             HideEdit()
         })
     }
 }
 // Vector search
 async function vectorSearchNote(){
+    if (isSaving) return // loading files is in progress
     // Read search text 
     const text = searchInputEl.value.trim();
     // Loading animation
     run_animation(libraryEl, "loading")
-    // TODO - check if note text is empty
+
     const resp = await fetch("/storage/similarity_search", {
         method: "POST",
         headers: {"Content-Type": "application/json"}, //application/x-www-form-urlencoded
@@ -180,6 +296,8 @@ async function vectorSearchNote(){
     lastSearchUsedScores = true
     stop_infinite_animation(libraryEl, "loading")
     const resp_json = await resp.json()
+    emptyNoteState()
+    HideEdit()
     // [{"id":..., "score":..., "text":..., "preview":..., "html_md":... },...]
     // Cache each note under it's SQLite ID
     notes_by_id.clear()
@@ -191,6 +309,7 @@ async function vectorSearchNote(){
 }
 // Sql search
 async function searchNoteSQL(){
+    if (isSaving) return // loading files is in progress
     // Read search text 
     const text = searchInputEl.value.trim();
     if (!text){
@@ -211,6 +330,8 @@ async function searchNoteSQL(){
     lastSearchUsedScores = false
     stop_infinite_animation(libraryEl, "loading")
     const resp_json = await resp.json()
+    emptyNoteState()
+    HideEdit()
     // Cache each note under it's SQLite ID
     notes_by_id.clear()
     for (const note of resp_json){
@@ -229,6 +350,14 @@ function unHideEdit(){
     saveNoteBtnEl.hidden = false
     editNoteBtnEl.hidden = true
 }
+
+function editToSaveBtn(){
+    // hide edit button - show save
+    saveNoteBtnEl.hidden = false
+    editNoteBtnEl.hidden = true
+}
+
+
 // Hide editor window and show note markdown
 function HideEdit(){
     // show card-content (markdown) 
@@ -240,22 +369,70 @@ function HideEdit(){
     saveNoteBtnEl.hidden = true
     editNoteBtnEl.hidden = false
 }
+function emptyNoteState(){
+    clear_pending_attachments()
+    delete documentMetaEl.dataset.noteId
+    editorInputEl.value = ""
+    mainNoteContentEl.innerHTML = ""
+    docReferenceEl.textContent = `ID / null`
+}
 
+
+function format_file_size(bytes){
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 ** 2) return `${(bytes / 1024).toFixed(1)} KiB`
+    if (bytes < 1024 ** 3) return `${(bytes / (1024**2)).toFixed(1)} MiB`
+    return `${(bytes / 1024 ** 3).toFixed(1)} GiB`
+}
 
 /**
  * 
  * @param {number} noteId 
  */
-function swap_main_note(noteId){
+async function swap_main_note(noteId){
     // Gather data from notes_by_id for this noteId
     const selectedNoteData = notes_by_id.get(Number(noteId))
-    // Find main targets
+    // Swap html_md
     mainNoteContentEl.innerHTML = selectedNoteData.html_md
-    // Swap note id
-    noteDocumentEl.querySelector("#document-reference").textContent = `ID / ${noteId}`
+    // Swap note id (visual + dataset)
+    docReferenceEl.textContent = `ID / ${noteId}`
     noteDocumentEl.querySelector("#document-meta").dataset.noteId = noteId
     // Reveal animation 
     run_animation(noteDocumentEl, "reveal")
+    // Fetch note's attachments
+    const resp = await fetch(`/sqlite/get_note_attachment_metadata/${noteId}`, {
+        method: "GET",
+    })
+    if (!resp.ok) {
+        const err = await resp.json()
+        throw new Error(
+            typeof err.detail === "string"
+                ? err.detail
+                : "Attachment upload failed"
+        )
+    }
+    const data = await resp.json()
+    storedAttachmentCountCache = data.length
+    attachmentCountEl.textContent = `STORED ATTACHMENTS / ${storedAttachmentCountCache}`
+    for (const d of data){ // Show attachments
+        // file = {"id":..., "filename":..., content_type:..., size_bytes:...,}
+        // Clone attachment element
+        const attachment_fragment = attachmentBtnTemplate.content.cloneNode(true)
+        const link = attachment_fragment.querySelector(".file-link")
+        link.href = `/sqlite/get_file/${d.id}`
+        //link.download = file.name
+        // replace text content on span & small
+        attachment_fragment.querySelector("span").textContent = d.filename 
+        attachment_fragment.querySelector("small").textContent = format_file_size(d.size_bytes) 
+        // Add cloned element
+        fileListEl.appendChild(attachment_fragment);
+    }
+    if (storedAttachmentCountCache === undefined || Number(storedAttachmentCountCache) < 1){
+        fileListEl.querySelector(".empty-files").hidden = false
+    } else {
+        fileListEl.querySelector(".empty-files").hidden = true
+    }
+    attachmentCountEl.textContent = `STORED ATTACHMENTS / ${storedAttachmentCountCache}`
 }
 
 /**
@@ -281,7 +458,9 @@ function fill_note_library(notes_by_id, show_score){
         fragment.querySelector(".note-meta").dataset.noteId = note.id 
         fragment.querySelector(".note-id").textContent = `ID / ${note.id}`
         if (show_score == true){
-            fragment.querySelector(".row-score").textContent = `sim ${note.score.toFixed(4)}`
+            if (note.score !== undefined){
+                fragment.querySelector(".row-score").textContent = `sim ${note.score.toFixed(4)}`
+            }   
         }
         else {
             fragment.querySelector(".row-score").textContent = ``
@@ -305,4 +484,33 @@ function run_animation(targetEl, animation_class) {
 function stop_infinite_animation(targetEl, animation_class){
     targetEl.classList.remove(animation_class)
     void targetEl.offsetWidth // force layout recalculation
+}
+
+async function upload_pending_files(noteId) {
+    if (pending_files.length === 0) return
+    // Prepare Form for upload
+    const formData = new FormData()
+    formData.append("note_id", noteId)
+    for (const file of pending_files){
+        formData.append("files", file)
+    }
+    // Upload request
+    const response = await fetch("/storage/store_files", {
+        method: "POST",
+        body: formData
+    })
+    // Validate response
+    if (!response.ok) {
+        const err = await response.json()
+        throw new Error(
+            typeof err.detail === "string"
+                ? err.detail
+                : "Attachment upload failed"
+        )
+    }
+    // Json unpack response
+    const data = await response.json()
+    console.log("file data:", data) 
+    // Remove successfully uploaded files
+    clear_pending_attachments()
 }

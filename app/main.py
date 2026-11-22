@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     qdrant_svc.create_collection_default() # Create note table in Qdrant
-    Base.metadata.create_all(bind=engine)  # Create note table in SQLite
+    Base.metadata.create_all(bind=engine)  # Create tables in SQLite
     logger.warning(f"ROOT_DIR --- {ROOT_DIR}")
     logger.warning(f"APP_DIR --- {APP_DIR}")
     yield

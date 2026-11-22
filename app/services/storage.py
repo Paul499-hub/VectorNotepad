@@ -1,12 +1,13 @@
 from app.services.qdrant import QdrantService
 from app.services.sqlite import SQLiteService
-from app.db.models import NoteORM
+from app.db.models import NoteORM, FileORM
 from app.db.db import SessionLocal
 from sqlalchemy import select
 from typing import List
 # Modules
 from app.schemas.embedding import IN_TextEmbedRequest, F_EmbedTextOut, IN_SimilaritySearchRequest
 from app.core.helpers import parse_into_markdown
+from app.schemas.file import FileCreate
 
 class StorageService:
     """## Abstract service, using `qdrant` + `sqlite` storage functionalities"""
@@ -75,4 +76,5 @@ class StorageService:
             for n in sorted(note_orms, key=lambda note: memory[note.id], reverse=True)
         ]
 
-    
+    def store_files(self, payload: list[FileCreate]):
+        return self.sqlite_svc.create_files(payload=payload)

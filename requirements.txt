@@ -16,3 +16,4 @@ sqlalchemy==2.0.41
 Markdown==3.8.1
 Pygments==2.19.1
 accelerate==1.13.0
+python-multipart==0.0.22

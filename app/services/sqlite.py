@@ -1,12 +1,50 @@
 from collections.abc import Iterable
+from sqlalchemy.engine import Row
 from sqlalchemy import select
 # Modules
 from app.core.helpers import parse_into_markdown
 from app.db.db import SessionLocal
-from app.db.models import NoteORM
+from app.db.models import NoteORM, FileORM
+from app.schemas.file import FileCreate
 from app.schemas.note import Note
 
 class SQLiteService():
+    def create_files(self, payload: list[FileCreate]):
+        session = SessionLocal()
+        try:
+            created_files = []
+            for f in payload:
+                file = FileORM(
+                    filename = f.filename,
+                    content_type = f.content_type,
+                    size_bytes = f.size_bytes,
+                    data = f.data,
+                    note_id = f.note_id
+                )
+                session.add(file)
+                created_files.append(file)
+            # Insert rows and id's before committing
+            session.flush()
+            result = {
+                "files": [
+                    {
+                        "id": file.id,
+                        "note_id": file.note_id,
+                        "filename": file.filename,
+                        "content_type": file.content_type,
+                        "size_bytes": file.size_bytes
+                    }
+                    for file in created_files
+                ]
+            }
+            session.commit()
+            return result
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+    
     def create_note(self, text:str) -> NoteORM:
         session = SessionLocal()
         try:
@@ -115,5 +153,29 @@ class SQLiteService():
                 "text": note.text,
                 "html_md": parse_into_markdown(note.text)
             }
+        finally:
+            session.close()
+
+    def get_note_att_meta(self, note_id: int) -> list[dict]:
+        # fetch id, filename, content_type, size_bytes
+        session = SessionLocal()
+        try:
+            stmt = (
+                select(FileORM.id, FileORM.filename, FileORM.content_type, FileORM.size_bytes)
+                .where(FileORM.note_id == note_id)
+            )
+            resp = session.execute(stmt).mappings().all() # list[RowMapping]
+            return resp
+        finally:
+            session.close()
+
+    def get_file_by_id(self, file_id: int) -> None | Row[tuple[bytes, str]]:
+        session = SessionLocal()
+        try:
+            stmt = (
+                select(FileORM.data, FileORM.content_type)
+                .where(FileORM.id == file_id)
+            )
+            return session.execute(stmt).one_or_none()
         finally:
             session.close()
