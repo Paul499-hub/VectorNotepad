@@ -13,6 +13,7 @@ class QdrantService:
     def __init__(self, host:str, port:int, embedding_svc: EmbeddingService):
         self.client = QdrantClient(host=host, port=port)
         self.default_collection_name = "notes"
+        self.test_collection_name = "test"
         self.embedding_svc = embedding_svc
 
     def create_collections(self, args_collection_names:list) -> None:
@@ -28,19 +29,34 @@ class QdrantService:
                 )
     
     def create_collection_default(self) -> None:
-            # Get all collections in Qdrant currently
-            collections = self.client.get_collections().collections
-            c_names = [c.name for c in collections]
-            # Check if given collection name exist, if not create
-            if self.default_collection_name not in c_names:
-                self.client.create_collection(
-                    collection_name=self.default_collection_name,
-                    vectors_config=VectorParams(
-                        size=settings.qdrant_vector_length,
-                        distance=Distance.COSINE #COSINE DOT EUCLID MANHATTAN
-                    )
+        # Get all collections in Qdrant currently
+        collections = self.client.get_collections().collections
+        c_names = [c.name for c in collections]
+        # Check if given collection name exist, if not create
+        if self.default_collection_name not in c_names:
+            self.client.create_collection(
+                collection_name=self.default_collection_name,
+                vectors_config=VectorParams(
+                    size=settings.qdrant_vector_length,
+                    distance=Distance.COSINE #COSINE DOT EUCLID MANHATTAN
                 )
-            return {"message": "ok"}
+            )
+        return {"message": "ok"}
+
+    # def create_collection_test(self) -> None:
+    #     # Get all collections in Qdrant currently
+    #     collections = self.client.get_collections().collections
+    #     c_names = [c.name for c in collections]
+    #     # Check if given collection name exist, if not create
+    #     if self.test_collection_name not in c_names:
+    #         self.client.create_collection(
+    #             collection_name=self.test_collection_name,
+    #             vectors_config=VectorParams(
+    #                 size=settings.qdrant_vector_length,
+    #                 distance=Distance.COSINE #COSINE DOT EUCLID MANHATTAN
+    #             )
+    #         )
+    #     return {"message": "ok"}
 
     def get_collection_info(self) -> list[dict]:
         collections = self.client.get_collections().collections
