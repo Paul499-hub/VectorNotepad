@@ -1,3 +1,4 @@
+from app.services.reranking import RerankingService
 from app.services.qdrant import QdrantService
 from app.services.sqlite import SQLiteService
 from app.db.models import NoteORM, FileORM
@@ -11,10 +12,11 @@ from app.schemas.file import FileCreate
 
 class StorageService:
     """## Abstract service, using `qdrant` + `sqlite` storage functionalities"""
-    def __init__(self, qdrant_svc: QdrantService, sqlite_svc: SQLiteService ):
+    def __init__(self, qdrant_svc: QdrantService, sqlite_svc: SQLiteService, reranking_svc: RerankingService ):
+        self.reranking_svc = reranking_svc
         self.qdrant_svc = qdrant_svc
         self.sqlite_svc = sqlite_svc
-
+        
     def save_note(self, text:str):
         sqlite_saved_note:NoteORM = self.sqlite_svc.create_note(text=text)
         note_id:int = sqlite_saved_note.id
@@ -65,16 +67,23 @@ class StorageService:
         sqlite_ids = memory.keys()
         # Find actual note text from SQLite 
         note_orms: list[NoteORM] = self.sqlite_svc.find_notes_by_ids(ids = sqlite_ids)
-        return [
-            {
+        # Rerank
+        query = payload.text
+        notes = [n.text for n in note_orms]
+        r_scores = self.reranking_svc.rerank(query, notes) # [float...]
+        # Build response output shape
+        out = []
+        for idx, n in enumerate(note_orms):
+            r_score = float(r_scores[idx])
+            out.append({
                 "id": n.id,
-                "score": memory[n.id],
+                "score": memory[n.id],      # Vector search memory score
+                "reranked_score": r_score,  # Reranked score
                 "text": n.text,
-                "html_md" : parse_into_markdown(n.text),
-                #"preview": f'{" ".join(n.text.split())[:50]}...' #<-- remove newlines / tabs
-            }
-            for n in sorted(note_orms, key=lambda note: memory[note.id], reverse=True)
-        ]
+                "html_md": parse_into_markdown(n.text)
+            })
+        return [n for n in sorted(out, key=lambda el: el["reranked_score"], reverse=True)]
 
     def store_files(self, payload: list[FileCreate]):
         return self.sqlite_svc.create_files(payload=payload)
+    

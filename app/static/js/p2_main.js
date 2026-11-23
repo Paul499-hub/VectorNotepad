@@ -35,7 +35,7 @@ const libraryEl = document.getElementById("library")
 // IMPORTANT > when creating new attachment > link.classList.add("pending")
 let mainNoteId 
 const pending_files = []
-const notes_by_id = new Map() // id => {"id":..., "score":..., "text":..., "html_md":... }
+const notes_by_id = new Map() // id => {"id":..., "score":..., "reranked_score"..., "text":..., "html_md":... }
 let isLoading = false
 let originalAttachmentCountCache // stored attachment variable (for discard reverts) (counts how many attachments were fetched from db)
 let lastSearchUsedScores = false
@@ -433,7 +433,12 @@ function fill_note_library(notes_by_id, show_score){
         fragment.querySelector(".note-id").textContent = `ID / ${note.id}`
         // Show score
         if (show_score && note.score !== undefined){
-            fragment.querySelector(".row-score").textContent = `sim ${note.score.toFixed(4)}`
+            if (note.reranked_score !== undefined){
+                fragment.querySelector(".row-score").textContent = `rank ${note.reranked_score.toFixed(4)}`
+            }else {
+                fragment.querySelector(".row-score").textContent = `sim ${note.score.toFixed(4)}`
+            }
+            
         } else {
             fragment.querySelector(".row-score").textContent = ``
         }
@@ -461,8 +466,8 @@ async function sql_vec_search(is_vector){
         resp_json = await get_backend_json("/storage/similarity_search", {
             method: "POST",
             headers: {"Content-Type": "application/json"}, //application/x-www-form-urlencoded
-            body: JSON.stringify({"text": s_text, "point_limit": 20})
-        }) // [{"id":..., "score":..., "text":..., "html_md":... },...]
+            body: JSON.stringify({"text": s_text, "point_limit": 50})
+        }) // [{"id":..., "score":..., "reranked_score"..., "text":..., "html_md":... },...]
     } else {
         resp_json = await get_backend_json("/sqlite/get", {
             method: "POST",

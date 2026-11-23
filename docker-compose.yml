@@ -19,7 +19,7 @@ services:
     volumes:
       - ./app:/app/app
       - hf_cache:/root/.cache/huggingface
-
+      
   qdrant:
     image: qdrant/qdrant:latest
     container_name: vn-qdrant
@@ -28,6 +28,21 @@ services:
       - "127.0.0.1:48723:6334" # gRPC
     volumes:
       - qdrant_data:/qdrant/storage
+
+  tests:
+    image: vn-backend
+    working_dir: /app
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    env_file:
+      - .env
+    volumes:
+      - ./app:/app/app
+      - ./tests:/app/tests
+      - hf_cache:/root/.cache/huggingface
+    profiles: ["test"]
 
 volumes:
   qdrant_data:
