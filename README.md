@@ -1,5 +1,6 @@
 # VeNote
 A local Markdown note-management application with semantic and keyword search.
+<img width="1887" height="900" alt="image" src="https://github.com/user-attachments/assets/5da044d5-d169-4b68-97e0-f5a808c4e591" />
 
 ## First-time setup
 1. Download or clone the project into a permanent folder.
