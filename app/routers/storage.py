@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Form, File, UploadFile
 # Modules
-from app.schemas.embedding import IN_UpdateRequest, IN_SimilaritySearchRequest
+from app.schemas.router import IN_UpdateRequest, IN_SimilaritySearchRequest, IN_FTS_BM25_SearchRequest
 from app.core.services import storage_svc
 from app.schemas.note import NoteCreate
 from app.schemas.file import FileCreate

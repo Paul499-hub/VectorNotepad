@@ -3,7 +3,8 @@ from qdrant_client import QdrantClient
 from collections.abc import Iterator
 import uuid
 # Modules
-from app.schemas.embedding import IN_TextEmbedRequest, F_EmbedTextOut, IN_SimilaritySearchRequest
+from app.schemas.router import  IN_SimilaritySearchRequest
+from app.schemas.embedding import  F_EmbedTextOut
 from app.services.embedding import EmbeddingService
 from app.core.helpers import parse_into_markdown
 from app.services.sqlite import SQLiteService

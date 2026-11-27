@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Form
 # Modules
 from app.services.embedding import EmbeddingService
-from app.schemas.embedding import IN_TextEmbedRequest
+from app.schemas.router import IN_TextEmbedRequest
 from app.core.services import embedding_svc
 
 router = APIRouter(prefix="/embed", tags=["Embedding"])

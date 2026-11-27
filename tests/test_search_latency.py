@@ -1,3 +1,5 @@
+import json
+import os
 import unittest
 from datetime import datetime, timezone
 from statistics import median
@@ -5,18 +7,28 @@ from time import perf_counter
 
 import tests.reusable as reusable
 
-# -------- LAUNCH
+# -------- LAUNCH (CPU)
 # docker compose -f docker-compose.cpu.test.yml up -d   # <-- (only if test containers are not already running)
 # docker compose -f docker-compose.cpu.test.yml exec backend python -m tests.test_search_latency -v
 
 # ====== DOWN
 # docker compose -f docker-compose.cpu.test.yml down
 
+# -------- LAUNCH (GPU)
+# docker compose -f docker-compose.test.yml up -d --build
+# Wait for http://127.0.0.1:48727/ui/home to load.
+# docker compose -f docker-compose.test.yml exec backend python3 -m tests.test_search_latency -v
+
+# ====== DOWN (GPU)
+# docker compose -f docker-compose.test.yml down
+
 # ----------- ENVIRONMENT
 # make sure your .env or .env.cpu (depeding of which compose you're running) has these variables
 # EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
 # QDRANT_VECTOR_LENGTH=384
 # RERANKER_MODEL=BAAI/bge-reranker-v2-m3
+
+
 
 NOTE_COUNTS = (1, 5, 10, 20, 50, 100)
 REPEATS = 3
@@ -45,6 +57,8 @@ NOTE_TEXTS = (
 
 class SearchLatencyTest(unittest.TestCase):
     def test_search_latency_by_note_count(self):
+        embedding_model = os.environ["EMBEDDING_MODEL"]
+        reranker_model = os.environ["RERANKER_MODEL"]
         self.assertEqual(
             reusable.request("GET", "/sqlite/count_notes"), 0,
             "Run against an empty test notebook so each row has the stated candidate count.",
@@ -69,6 +83,7 @@ class SearchLatencyTest(unittest.TestCase):
         input_chars = 0
         csv_rows = []
         step = RERANK_WINDOW_SIZE - RERANK_OVERLAP
+        print(f"\nEmbedding model: {embedding_model}\nReranker model: {reranker_model}", flush=True)
         print(
             "\nNotes | Total chunks | Input chars | Rerank off median (ms) | Rerank on median (ms)",
             flush=True,
@@ -112,8 +127,18 @@ class SearchLatencyTest(unittest.TestCase):
             )
 
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
-        csv_path = reusable.write_results_csv(f"search_latency_{timestamp}.csv", csv_rows)
+        csv_path = reusable.write_results_csv(
+            "results.csv", csv_rows, run_folder=f"search_latency_{timestamp}"
+        )
+        metadata_path = csv_path.with_name("metadata.json")
+        with metadata_path.open("x", encoding="utf-8") as metadata_file:
+            json.dump({
+                "embedding_model": embedding_model,
+                "reranker_model": reranker_model,
+            }, metadata_file, indent=2)
+            metadata_file.write("\n")
         print(f"Saved results to {csv_path}", flush=True)
+        print(f"Saved model names to {metadata_path}", flush=True)
 
 
 if __name__ == "__main__":

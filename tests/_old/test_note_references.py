@@ -134,7 +134,7 @@ def linked_notes(storage):
 
 
 def test_search_groups_points_and_uses_best_score(linked_notes):
-    from app.schemas.embedding import IN_SimilaritySearchRequest
+    from app.schemas.router import IN_SimilaritySearchRequest
 
     storage, note_id, other_id = linked_notes
     points = get_points(storage)
@@ -163,7 +163,7 @@ def test_search_groups_points_and_uses_best_score(linked_notes):
 
 
 def test_batched_chunk_reranking_keeps_each_notes_best_score(linked_notes, monkeypatch):
-    from app.schemas.embedding import IN_SimilaritySearchRequest
+    from app.schemas.router import IN_SimilaritySearchRequest
 
     storage, note_id, other_id = linked_notes
     original_text = "a" * 448 + "b" * 448 + "c" * 100
