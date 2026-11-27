@@ -1,0 +1,29 @@
+name: venote-cpu
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.cpu
+    env_file:
+      - .env.cpu
+    environment:
+      QDRANT_HOST: qdrant
+      QDRANT_PORT: "6333"
+      SQLITE_DB_PATH: data/venote_cpu.db
+    ports:
+      - "127.0.0.1:48725:8000"
+    depends_on:
+      - qdrant
+    volumes:
+      - ./app:/app/app
+      - hf_cache:/root/.cache/huggingface
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+volumes:
+  hf_cache:
+  qdrant_data:

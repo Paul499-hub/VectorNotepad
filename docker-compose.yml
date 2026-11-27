@@ -29,21 +29,6 @@ services:
     volumes:
       - qdrant_data:/qdrant/storage
 
-  tests:
-    image: vn-backend
-    working_dir: /app
-    runtime: nvidia
-    environment:
-      NVIDIA_VISIBLE_DEVICES: all
-      NVIDIA_DRIVER_CAPABILITIES: compute,utility
-    env_file:
-      - .env
-    volumes:
-      - ./app:/app/app
-      - ./tests:/app/tests
-      - hf_cache:/root/.cache/huggingface
-    profiles: ["test"]
-
 volumes:
   qdrant_data:
   hf_cache:

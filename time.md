@@ -1,24 +1,12 @@
-## Todos
-make notes vector variant ready [done, now just need to add vector variant storing] 
-document support for note (SQLite blob)
-re-ranking
-tunable limit
+## Cpu empty (RAM) and disk
+## Disk
+venote-cpu-backend    2.02GB 
+qdrant/qdrant         287MB
+### RAM (idle) (reranking disabled)
+venote-cpu-backend-1  350.7MiB / 7.525GiB 
+venote-cpu-qdrant-1   45.84MiB / 7.525GiB
 
+### RAM (idle) (reranking enabled)
+venote-cpu-backend-1  710.9MiB / 7.525GiB
+venote-cpu-qdrant-1   144.3MiB / 7.525GiB 
 
-**QdrantService.similarity_search**
-What needs to change. Qdrant gets a note id, score, text
-text = sqlite id - id of sqlite row of original text
-old text stored a COPY of original text - effectively doubling storage
-Now source of truth will be SQLite - qdrant will only store vectors + references to object
-We need to change what's stored into this text variable
-After that the plan is to vector search like this 
-- 1. Find most relevant vector's 
-- 2. Fetch their corresponding SQLite rows by `text` stored in Qdrant
-- 3. Extract text from SQLite
-parse text like i currently do
-```
-"html_md": parse_into_markdown(s.payload.get('text')) if s.payload else None, 
-```
-
-StorageService.update_note can fail and leave vectordb not matching with sqlite.
-If operation fails - add a user inidcation to rebuild.

@@ -39,6 +39,13 @@ const notes_by_id = new Map() // id => {"id":..., "score":..., "reranked_score".
 let isLoading = false
 let originalAttachmentCountCache // stored attachment variable (for discard reverts) (counts how many attachments were fetched from db)
 let lastSearchUsedScores = false
+const rerankButton = document.getElementById("rerank")
+rerankButton.addEventListener("click", () => {
+    const enabled = rerankButton.getAttribute("aria-pressed") !== "true"
+    rerankButton.setAttribute("aria-pressed", String(enabled))
+    rerankButton.querySelector("span").textContent = enabled ? "ON" : "OFF"
+})
+const vs_point_limit = 150 // Initial vector search returned point limit. (Bigger is better for reranking)
 // ~~~~~~~~~~ UI 
 
 function ui_read_search_bar_text(){
@@ -259,16 +266,19 @@ saveNoteBtnEl.addEventListener("click", async ()=> {
     try{
         let resp_json
         if (mainNoteId===undefined){ // <-- saving new note
-            resp_json = await get_backend_json("/storage/save_note", {
+            resp_json = await get_backend_json("/storage/save_note_chunks", { // "/storage/save_note"
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({"text":editorInputEl.value})
-            })// {"id":..., "text":..., "html_md":...}
+            })// {"id":..., "text":..., "html_md":..., "last_chunk_idx"}
+            if (resp_json.last_chunk_idx){
+                alert(`Note was embedded into ${resp_json.last_chunk_idx} chunks`)
+            }
             // Add new note to in-memory notes_by_id
             notes_by_id.set(Number(resp_json.id), resp_json)
             mainNoteId = resp_json.id // new note gains ID
         } else { // <-- saving existing note
-            resp_json = await get_backend_json("/storage/update_note", {
+            resp_json = await get_backend_json("/storage/update_note_chunks", {
                 method: "PATCH",
                 headers: {"Content-Type":"application/json"},
                 body: JSON.stringify({ "id": mainNoteId, "text": editorInputEl.value })
@@ -462,21 +472,32 @@ async function sql_vec_search(is_vector){
     ui_run_animation(libraryEl, "loading")
     isLoading = true
     let resp_json
-    if (is_vector) {
-        resp_json = await get_backend_json("/storage/similarity_search", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"}, //application/x-www-form-urlencoded
-            body: JSON.stringify({"text": s_text, "point_limit": 50})
-        }) // [{"id":..., "score":..., "reranked_score"..., "text":..., "html_md":... },...]
-    } else {
-        resp_json = await get_backend_json("/sqlite/get", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"}, //application/x-www-form-urlencoded
-            body: JSON.stringify({"text": s_text})
-        }) // [{"id":..., "score":..., "text":..., "html_md":... },...]
+    try {
+        if (is_vector) {
+            resp_json = await get_backend_json("/storage/similarity_search_chunks", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    "text": s_text,
+                    "point_limit": vs_point_limit,
+                    "rerank": rerankButton.getAttribute("aria-pressed") === "true"
+                })
+            })
+        } else {
+            resp_json = await get_backend_json("/sqlite/get", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({"text": s_text})
+            })
+        }
+    } catch (error) {
+        console.error(error)
+        alert("Could not complete the search.")
+        return
+    } finally {
+        isLoading = false
+        ui_stop_infinite_animation(libraryEl, "loading")
     }
-    isLoading = false
-    ui_stop_infinite_animation(libraryEl, "loading")
     // Clear main note UI 
     ui_clear_main_note_elements()
     mainNoteId = undefined

@@ -1,6 +1,7 @@
 import sys
 from types import ModuleType
 
+import numpy as np
 import pytest
 from qdrant_client import QdrantClient
 from sqlalchemy import create_engine
@@ -38,9 +39,10 @@ def storage(monkeypatch, tmp_path):
     monkeypatch.setenv("QDRANT_VECTOR_LENGTH", "3")
 
     # EmbeddingService imports this module at startup.
-    # We inject our own embedding service below, so no model is needed.
+    # The fixture uses fake embeddings and exercises vector-only search.
     registry = ModuleType("app.ai_models.model_registry")
     registry.embedding_model = None
+    registry.reranker_model = None
     monkeypatch.setitem(sys.modules, registry.__name__, registry)
 
     from app.core.config import settings
@@ -96,6 +98,7 @@ def storage(monkeypatch, tmp_path):
         yield StorageService(
             qdrant_svc=qdrant,
             sqlite_svc=sqlite_module.SQLiteService(),
+            reranking_svc=None,
         )
     finally:
         client.close()
@@ -146,16 +149,55 @@ def test_search_groups_points_and_uses_best_score(linked_notes):
     ) == 3
 
     results = storage.vector_search_note(
-        IN_SimilaritySearchRequest(text="query", args_limit=10)
+        IN_SimilaritySearchRequest(text="query", point_limit=10, rerank=False)
     )
 
     assert [note["id"] for note in results] == [note_id, other_id]
     assert results[0]["score"] == pytest.approx(1.0)
     assert results[1]["score"] == pytest.approx(0.8)
+    assert all("reranked_score" not in note for note in results)
 
     # Display the source text, not the winning variant's text.
     assert results[0]["text"] == "Original note"
     assert results[0]["html_md"] == "<p>Original note</p>"
+
+
+def test_batched_chunk_reranking_keeps_each_notes_best_score(linked_notes, monkeypatch):
+    from app.schemas.embedding import IN_SimilaritySearchRequest
+
+    storage, note_id, other_id = linked_notes
+    original_text = "a" * 448 + "b" * 448 + "c" * 100
+    other_text = "d" * 448 + "e" * 100
+    storage.sqlite_svc.update_note(note_id, original_text)
+    storage.sqlite_svc.update_note(other_id, other_text)
+
+    chunk_scores = {
+        original_text[:512]: 0.1,
+        original_text[448:960]: 0.6,
+        original_text[896:]: 0.2,
+        other_text[:512]: 0.9,
+        other_text[448:]: 0.4,
+    }
+    calls = []
+
+    class TestReranker:
+        def rerank(self, query, chunks):
+            calls.append((query, chunks))
+            return np.array([chunk_scores[chunk] for chunk in chunks], dtype=np.float32)
+
+    monkeypatch.setattr(storage, "reranking_svc", TestReranker())
+
+    results = storage.vector_search_note_chunks_batched(
+        IN_SimilaritySearchRequest(text="query", point_limit=10, rerank=True)
+    )
+
+    assert len(calls) == 1
+    query, chunks = calls[0]
+    assert query == "query"
+    assert sorted(chunks) == sorted(chunk_scores)
+    assert [note["id"] for note in results] == [other_id, note_id]
+    assert [note["reranked_score"] for note in results] == pytest.approx([0.9, 0.6])
+    assert all(type(note["reranked_score"]) is float for note in results)
 
 
 def test_update_replaces_all_related_points(linked_notes):

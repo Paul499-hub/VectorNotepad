@@ -359,6 +359,16 @@ svg {
     color: var(--bg);
 }
 
+.app .workspace .toolbar .search .search-actions #rerank[aria-pressed="true"] {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+#rerank:focus-visible {
+    outline: 1px solid var(--accent);
+    outline-offset: -1px;
+}
+
 .app .workspace .toolbar .search .search-actions .search-action svg {
     width: 13px;
     height: 13px;
@@ -626,5 +636,16 @@ svg {
     }
     .app .workspace .toolbar .breadcrumb {
         display: none;
+    }
+    .app .workspace .toolbar .search {
+        flex-wrap: wrap;
+    }
+    .app .workspace .toolbar .search input {
+        flex: 1;
+    }
+    .app .workspace .toolbar .search .search-actions {
+        flex-basis: 100%;
+        flex-wrap: wrap;
+        padding: 0 4px 4px;
     }
 }

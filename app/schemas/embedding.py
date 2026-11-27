@@ -8,6 +8,7 @@ class IN_SimilaritySearchRequest(BaseModel):
     text: str
     point_limit: int = Field(gt=0, lt=99999)
     note_limit: int | None = Field(default=None, gt=0, lt=99999)
+    rerank: bool = True
 
 class IN_UpdateRequest(BaseModel):
     id: int = Field(gt=0, lt=99999)
@@ -18,3 +19,4 @@ class F_EmbedTextOut(BaseModel):
     status: str
     vector: list[float]
     vector_size: int
+    chunk_index: int | None = None

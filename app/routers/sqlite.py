@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Response
+from urllib.parse import quote
 # Modules
 from app.core.services import sqlite_svc
 from app.schemas.embedding import IN_TextEmbedRequest, IN_UpdateRequest
@@ -88,8 +89,14 @@ def r_get_file(file_id: int):
     data = sqlite_svc.get_file_by_id(file_id)
     if data is None:
         raise HTTPException(status_code=404, detail="File not found")
+    # After the existing 404 check
+    filename = quote(data.filename or "attachment", safe="")
     return Response(
-        content = data.data,
-        media_type = data.content_type
+        content=data.data,
+        media_type="application/octet-stream",
+        headers={
+            "Content-Disposition": f"attachment; filename*=UTF-8''{filename}",
+            "X-Content-Type-Options": "nosniff",
+        },
     )
     

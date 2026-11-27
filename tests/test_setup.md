@@ -1,14 +1,17 @@
-## Create test env
+# Run all tests (cpu)
 ```
-python -m venv .venv-tests
+docker compose -f docker-compose.cpu.test.yml up -d --build
+```
+Once fully loads
+```
+    docker compose -f docker-compose.cpu.test.yml exec backend python -m unittest discover -s tests -p "test_*.py" -v
 ```
 
-## Install deps
+# Run all tests (gpu)
 ```
-.\.venv-tests\Scripts\python.exe -m pip install pytest qdrant-client==1.16.1 sqlalchemy==2.0.41 pydantic==2.12.5 python-dotenv==1.2.1 Markdown==3.8.1 Pygments==2.19.1
+docker compose -f docker-compose.test.yml up -d --build
 ```
-
-## Run test example
+Once it fully loads
 ```
-.\.venv-tests\Scripts\python.exe -m pytest tests/test_note_references.py -v
+docker compose -f docker-compose.test.yml exec backend python -m unittest discover -s tests -p "test_*.py" -v
 ```

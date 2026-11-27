@@ -1,6 +1,6 @@
 from sentence_transformers import SentenceTransformer, CrossEncoder
 from transformers import AutoTokenizer, AutoModelForCausalLM
-import torch
+#import torch
 # Modules
 from app.core.config import settings
 
@@ -29,8 +29,9 @@ if False: # <--- disabled for now. POST `/vector_variant_generator/send_msg_to_a
     print(f"[vv_model device_map]:{vv_model.hf_device_map}")
 
 # ---------- Reranking retrieved notes
-reranker_model = CrossEncoder(
-    "BAAI/bge-reranker-v2-m3",
-    device="cuda",
-    model_kwargs={"dtype": torch.float16}
-)
+# ------ WILL LAZY LOAD in RerankingService on first rerank call
+# reranker_model = CrossEncoder(
+#     "BAAI/bge-reranker-v2-m3",
+#     device="cuda",
+#     model_kwargs={"dtype": torch.float16}
+# )
