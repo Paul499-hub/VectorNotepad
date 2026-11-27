@@ -38,3 +38,4 @@ build/
 # Local data
 qdrant_data/
 app/data/
+/tests/log/
