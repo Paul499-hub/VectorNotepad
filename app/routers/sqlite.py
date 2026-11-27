@@ -2,7 +2,8 @@ from fastapi import APIRouter, HTTPException, Response
 from urllib.parse import quote
 # Modules
 from app.core.services import sqlite_svc
-from app.schemas.embedding import IN_TextEmbedRequest, IN_UpdateRequest
+from app.schemas.router import IN_TextEmbedRequest, IN_UpdateRequest, IN_FTS_BM25_SearchRequest
+
 
 router = APIRouter(prefix="/sqlite", tags=["Sqlite"])
 
@@ -99,4 +100,12 @@ def r_get_file(file_id: int):
             "X-Content-Type-Options": "nosniff",
         },
     )
-    
+
+@router.post("/search_fts_bm25", status_code=200)
+def r_search_fts_bm25(
+                        payload: IN_FTS_BM25_SearchRequest
+                    ):
+    try:
+        return sqlite_svc.search_notes_bm25(query=payload.text, limit=payload.limit)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))

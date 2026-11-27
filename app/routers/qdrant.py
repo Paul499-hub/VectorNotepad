@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 # Modules
-from app.schemas.embedding import IN_TextEmbedRequest, IN_SimilaritySearchRequest, IN_UpdateRequest
+from app.schemas.router import  IN_SimilaritySearchRequest
 from app.core.services import qdrant_svc
 
 router = APIRouter(prefix="/qdrant", tags=["QDRANT"])

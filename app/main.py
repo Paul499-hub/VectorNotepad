@@ -9,10 +9,10 @@ from app.routers.embedding import router as embedding_router
 from app.routers.storage import router as storage_router
 from app.routers.qdrant import router as qdrant_router
 from app.routers.sqlite import router as sqlite_router
+from app.db.db import Base, engine, create_notes_fts
 from app.routers.ui import router as ui_router
 from app.core.config import ROOT_DIR, APP_DIR
 from app.core.services import qdrant_svc
-from app.db.db import Base, engine
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     qdrant_svc.create_collection_default() # Create note table in Qdrant
     Base.metadata.create_all(bind=engine)  # Create tables in SQLite
+    create_notes_fts() # notes.text full text search index 
     logger.warning(f"ROOT_DIR --- {ROOT_DIR}")
     logger.warning(f"APP_DIR --- {APP_DIR}")
     yield

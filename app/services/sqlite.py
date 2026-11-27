@@ -1,6 +1,7 @@
+from sqlalchemy import select, text as sql_text
 from collections.abc import Iterable
 from sqlalchemy.engine import Row
-from sqlalchemy import select
+import re
 # Modules
 from app.core.helpers import parse_into_markdown
 from app.db.db import SessionLocal
@@ -181,3 +182,30 @@ class SQLiteService():
             return session.execute(stmt).one_or_none()
         finally:
             session.close()
+
+    def search_notes_bm25(self, query: str, limit: int = 50) -> list[dict]:
+        terms = re.findall(r"[^\W_]+", query)
+        if not terms:
+            return []
+        match_query = " OR ".join(f'"{term}"' for term in terms)
+        statement = sql_text("""
+            SELECT notes.id, notes.text, bm25(notes_fts) AS score
+            FROM notes_fts
+            JOIN notes ON notes.id = notes_fts.rowid
+            WHERE notes_fts MATCH :match_query
+            ORDER BY score ASC, notes.id ASC
+            LIMIT :limit
+        """)
+        with SessionLocal() as session:
+            rows = session.execute(
+                statement, {"match_query": match_query, "limit": limit}
+            ).mappings()
+            return [
+                {
+                    "id": row["id"],
+                    "text": row["text"],
+                    "score": row["score"],
+                    "html_md": parse_into_markdown(row["text"])
+                } 
+                for row in rows
+            ]

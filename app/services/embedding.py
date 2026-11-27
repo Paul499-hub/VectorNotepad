@@ -1,5 +1,5 @@
-from app.schemas.embedding import IN_TextEmbedRequest, F_EmbedTextOut
 from app.ai_models.model_registry import embedding_model
+from app.schemas.embedding import F_EmbedTextOut
 from app.core.config import settings
 from collections.abc import Iterator
 

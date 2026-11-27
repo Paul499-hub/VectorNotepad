@@ -10,6 +10,7 @@ const vectorSearchBtnEl = document.getElementById("vector")
 const deleteNoteBtnEl = document.getElementById("delete")
 const attachFileBtnEl = document.getElementById("attach")
 const SQLSearchBtnEl = document.getElementById("keyword")
+const bm25SearchBtnEl = document.getElementById("bm25")
 const editNoteBtnEl = document.getElementById("edit")
 const saveNoteBtnEl = document.getElementById("save")
 // ======== OTHER ===============
@@ -181,12 +182,13 @@ function ui_append_attachments(data){
 
 // Vector search
 vectorSearchBtnEl.addEventListener("click", async ()=>{
-    sql_vec_search(true)
+    search_notes("vector")
 })
 // SQL search button
 SQLSearchBtnEl.addEventListener("click", async ()=>{
-    sql_vec_search(false)
+    search_notes("keyword")
 })
+bm25SearchBtnEl.addEventListener("click", () => search_notes("bm25"))
 // New note btn
 newNoteBtnEl.addEventListener("click", ()=>{
     if (isLoading) return
@@ -459,15 +461,15 @@ function fill_note_library(notes_by_id, show_score){
 }
 
 /**
- * Searches notes using vector similarity or SQL keyword matching.
+ * Searches notes using vector similarity, substring matching, or BM25.
  * Clears the current selection and attachments, caches the results,
  * and rebuilds the library. Shows similarity scores only for vector search.
- * @param {boolean} is_vector - True for vector search; false for SQL search.
+ * @param {"vector" | "keyword" | "bm25"} mode - Search method.
  * @returns {Promise<void>}
  */
-async function sql_vec_search(is_vector){
+async function search_notes(mode){
     if (isLoading) {return}
-    lastSearchUsedScores = is_vector
+    const is_vector = mode === "vector"
     const s_text = ui_read_search_bar_text()
     ui_run_animation(libraryEl, "loading")
     isLoading = true
@@ -484,7 +486,8 @@ async function sql_vec_search(is_vector){
                 })
             })
         } else {
-            resp_json = await get_backend_json("/sqlite/get", {
+            const endpoint = mode === "bm25" ? "/sqlite/search_fts_bm25" : "/sqlite/get"
+            resp_json = await get_backend_json(endpoint, {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({"text": s_text})
@@ -498,6 +501,7 @@ async function sql_vec_search(is_vector){
         isLoading = false
         ui_stop_infinite_animation(libraryEl, "loading")
     }
+    lastSearchUsedScores = is_vector
     // Clear main note UI 
     ui_clear_main_note_elements()
     mainNoteId = undefined
