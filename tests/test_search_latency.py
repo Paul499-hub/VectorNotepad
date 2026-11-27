@@ -12,6 +12,11 @@ import tests.reusable as reusable
 # ====== DOWN
 # docker compose -f docker-compose.cpu.test.yml down
 
+# ----------- ENVIRONMENT
+# make sure your .env or .env.cpu (depeding of which compose you're running) has these variables
+# EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+# QDRANT_VECTOR_LENGTH=384
+# RERANKER_MODEL=BAAI/bge-reranker-v2-m3
 
 NOTE_COUNTS = (1, 5, 10, 20, 50, 100)
 REPEATS = 3
