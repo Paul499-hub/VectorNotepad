@@ -27,7 +27,7 @@
     color: var(--accent);
     background: var(--accent-soft);
     /* border-bottom-color: #b4df83e8; */
-    border-color: #b4df8352;
+    /* border-color: #b4df8352; */
 }
 .app .library .filters .filter-btn svg {
     width: 13px;

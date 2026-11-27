@@ -17,6 +17,22 @@ def r_save_note(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/save_note_chunks", status_code=200)
+def r_save_note(
+                payload: NoteCreate
+            ):
+    try:
+        return storage_svc.save_note_chunks(text=payload.text)
+        # "id": sqlite_saved_note.id,
+        # "text": text,
+        # "html_md": parse_into_markdown(text),
+        # "last_chunk_idx": last_chunk_idx
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
     
 @router.delete("/del/{note_id}")
 def r_delete_note(
@@ -47,10 +63,27 @@ def r_update_note(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
+@router.patch("/update_note_chunks", status_code=200)
+def r_update_note(
+                payload: IN_UpdateRequest
+            ):
+    try:
+        return storage_svc.update_note_chunks(note_id=payload.id, text=payload.text)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @router.post("/similarity_search", status_code=200)
 def r_vector_search(payload: IN_SimilaritySearchRequest):
     try:
         return storage_svc.vector_search_note(payload)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/similarity_search_chunks", status_code=200)
+def r_vector_search(payload: IN_SimilaritySearchRequest):
+    try:
+        return storage_svc.vector_search_note_chunks(payload)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

@@ -1,5 +1,6 @@
 from qdrant_client.models import Distance, VectorParams, PointStruct, FilterSelector, Filter, FieldCondition, MatchValue, PointIdsList
 from qdrant_client import QdrantClient
+from collections.abc import Iterator
 import uuid
 # Modules
 from app.schemas.embedding import IN_TextEmbedRequest, F_EmbedTextOut, IN_SimilaritySearchRequest
@@ -173,3 +174,40 @@ class QdrantService:
             ),
             wait=True,
         )
+
+    # ------------ CHUNKING 
+    def embed_text_chunks(self, text:str) -> Iterator[F_EmbedTextOut]:
+        """### Wrapper generator around `embedding_svc.embed_text_chunks` call
+        takes care of input and output of ebbedding chunks
+        """
+        # E5 models were trained with "passage/query" prefixes
+        prefix = ""
+        if settings.embedding_model == "intfloat/e5-large-v2":
+            prefix = "passage: "
+        #emb_resp:F_EmbedTextOut = self.embedding_svc.embed_text_chunks(text=text_to_embed)
+        for emb_resp in self.embedding_svc.embed_text_chunks(text=text, prefix=prefix ):
+            self.validate_emb_response_len(emb_resp) # Check if length matched collection
+            yield emb_resp
+
+    def store_vector_chunks(self, text:str, note_id:int) -> dict:
+        #emb, text_to_embed = self.embed_text_chunks(text)
+        last_chunk_idx = None
+        for emb in self.embed_text_chunks(text): # emb: F_EmbedTextOut
+            vector = emb.vector
+            point_id = uuid.uuid4()
+            last_chunk_idx = emb.chunk_index
+            # Insert vector
+            self.client.upsert(
+                collection_name = self.default_collection_name,
+                points = [
+                    PointStruct(
+                        id = point_id,
+                        vector = vector,
+                        payload={
+                            "sqlite_note_id": note_id,
+                            "chunk_idx": emb.chunk_index
+                        }
+                    )
+                ]
+            )
+        return {"last_chunk_idx": last_chunk_idx}

@@ -91,7 +91,7 @@ class SQLiteService():
         finally:
             session.close()
 
-    def delete_note(self, note_id:int ):
+    def delete_note(self, note_id:int):
         session = SessionLocal()
         try:
             note = session.get(NoteORM, note_id)
@@ -122,16 +122,18 @@ class SQLiteService():
         return {"message": "ok", "deleted_duplicates": len(duplicate_ids)}
     
     def update_note(self, note_id:int, text:str):
+        """### Updates `note.text` in sqlite of given `note_id` to given `text`
+        """
         session = SessionLocal()
         try:
             new_note:Note = Note.model_validate({"id": note_id, "text": text})
-            old_note:NoteORM = session.get(NoteORM, note_id)
-            if not old_note:
+            note:NoteORM = session.get(NoteORM, note_id)
+            if not note:
                 raise ValueError("Note not found")
-            old_text_cache = old_note.text
-            old_note.text = new_note.text
+            old_text_cache = note.text
+            note.text = new_note.text
             session.commit()
-            session.refresh(old_note)
+            session.refresh(note)
             return {
                 "updated_id":f"{note_id}", 
                 "old_text":old_text_cache, 
@@ -173,7 +175,7 @@ class SQLiteService():
         session = SessionLocal()
         try:
             stmt = (
-                select(FileORM.data, FileORM.content_type)
+                select(FileORM.data, FileORM.content_type, FileORM.filename)
                 .where(FileORM.id == file_id)
             )
             return session.execute(stmt).one_or_none()

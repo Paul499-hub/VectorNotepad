@@ -12,6 +12,7 @@ class Settings:
         self.qdrant_port:int = int(os.getenv("QDRANT_PORT"))
         self.embedding_model:str = os.getenv("EMBEDDING_MODEL")
         self.qdrant_vector_length:int = int(os.getenv("QDRANT_VECTOR_LENGTH"))
-        self.sqlite_db_path:str =os.getenv("SQLITE_DB_PATH") 
+        self.sqlite_db_path:str = os.getenv("SQLITE_DB_PATH") 
+        self.reranker_model:str = os.getenv("RERANKER_MODEL")
 
 settings = Settings()
